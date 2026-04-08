@@ -11,7 +11,7 @@ import {
 } from '@/lib/queries'
 import { formatNumber } from '@/lib/utils'
 
-export const revalidate = 300
+export const revalidate = 30
 
 export default async function NewsDiscoveryPage() {
   const [newsStats, throughput, topSources, dateDist, deltas] = await Promise.all([

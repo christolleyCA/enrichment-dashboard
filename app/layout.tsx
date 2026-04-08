@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Link from 'next/link'
+import LiveRefresh from '@/components/live-refresh'
 import './globals.css'
 
 const inter = Inter({
@@ -56,6 +57,8 @@ export default function RootLayout({
         <main className="flex-1 min-h-screen overflow-auto p-8">
           {children}
         </main>
+
+        <LiveRefresh />
       </body>
     </html>
   )

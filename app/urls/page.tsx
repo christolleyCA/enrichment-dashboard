@@ -9,7 +9,7 @@ import {
 } from '@/lib/costs'
 import { formatNumber, formatPct } from '@/lib/utils'
 
-export const revalidate = 300
+export const revalidate = 30
 
 export default async function UrlDiscoveryPage() {
   const [stats, throughput, deltas] = await Promise.all([

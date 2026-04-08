@@ -11,7 +11,7 @@ import {
 } from '@/lib/costs'
 import { formatNumber, formatPct, calcETA } from '@/lib/utils'
 
-export const revalidate = 300 // 5 minutes
+export const revalidate = 30 // 30 seconds — live refresh handles the interval
 
 export default async function OverviewPage() {
   const [stats, newsStats, deltas] = await Promise.all([
