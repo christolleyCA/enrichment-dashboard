@@ -4,9 +4,9 @@ import ActivityTable from '@/components/activity-table'
 import { getDashboardStats, getNewsStats, getTimeDeltas } from '@/lib/queries'
 import {
   estimateUrlSerpentCost,
-  estimateUrlClaudeCost,
+  estimateUrlSerperCost,
   estimateNewsSerpentCost,
-  estimateNewsClaudeCost,
+  estimateNewsSerperCost,
   formatCost,
 } from '@/lib/costs'
 import { formatNumber, formatPct, calcETA } from '@/lib/utils'
@@ -21,10 +21,10 @@ export default async function OverviewPage() {
   ])
 
   const urlSerpentCost = estimateUrlSerpentCost(stats.url_serpent_searched, stats.url_serpent_found)
-  const urlClaudeCost = estimateUrlClaudeCost(stats.url_claude_searched)
+  const urlSerperCost = estimateUrlSerperCost(stats.url_claude_searched)
   const newsSerpentCost = estimateNewsSerpentCost(stats.url_serpent_searched, newsStats.unique_orgs)
-  const newsClaudeCost = estimateNewsClaudeCost(stats.url_claude_searched)
-  const totalCost = urlSerpentCost + urlClaudeCost + newsSerpentCost + newsClaudeCost
+  const newsSerperCost = estimateNewsSerperCost(stats.url_claude_searched)
+  const totalCost = urlSerpentCost + urlSerperCost + newsSerpentCost + newsSerperCost
 
   const urlProcessed = stats.url_serpent_searched
   const urlTotal = stats.total_orgs
@@ -83,7 +83,7 @@ export default async function OverviewPage() {
         <StatCard
           label="Total Est. Cost"
           value={formatCost(totalCost)}
-          sub={`URL: ${formatCost(urlSerpentCost + urlClaudeCost)} / News: ${formatCost(newsSerpentCost + newsClaudeCost)}`}
+          sub={`URL: ${formatCost(urlSerpentCost + urlSerperCost)} / News: ${formatCost(newsSerpentCost + newsSerperCost)}`}
           color="text-amber-400"
         />
       </div>
@@ -112,7 +112,7 @@ export default async function OverviewPage() {
               <p className="text-sm text-gray-400">
                 Est. Cost:{' '}
                 <span className="text-amber-400 font-medium">
-                  {formatCost(urlSerpentCost + urlClaudeCost)}
+                  {formatCost(urlSerpentCost + urlSerperCost)}
                 </span>
               </p>
               <p className="text-sm text-gray-400">
@@ -151,7 +151,7 @@ export default async function OverviewPage() {
               <p className="text-sm text-gray-400">
                 Est. Cost:{' '}
                 <span className="text-amber-400 font-medium">
-                  {formatCost(newsSerpentCost + newsClaudeCost)}
+                  {formatCost(newsSerpentCost + newsSerperCost)}
                 </span>
               </p>
               <p className="text-sm text-gray-400">
@@ -169,7 +169,7 @@ export default async function OverviewPage() {
           { label: 'News Articles', key: 'news_articles' },
           { label: 'Orgs with News', key: 'news_orgs' },
           { label: 'Serpent URLs Found', key: 'serpent_urls' },
-          { label: 'Claude URLs Found', key: 'claude_urls' },
+          { label: 'Serper URLs Found', key: 'claude_urls' },
         ]}
       />
 
@@ -205,14 +205,14 @@ export default async function OverviewPage() {
           </div>
           <Arrow />
           <FunnelStep
-            label="Claude Tried"
+            label="Serper Tried"
             value={formatNumber(stats.url_claude_searched)}
             color="text-purple-400"
           />
           <Arrow />
           <div className="flex flex-col gap-2">
             <FunnelStep
-              label="Claude Found"
+              label="Serper Found"
               value={formatNumber(stats.url_claude_found)}
               color="text-green-400"
               small

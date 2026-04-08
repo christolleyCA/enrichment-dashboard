@@ -168,7 +168,7 @@ export async function getNewsDateDistribution(): Promise<NewsDateRow[]> {
 
 export async function getUrlSamples(
   country?: string,
-  workflow?: 'serpent' | 'claude'
+  workflow?: 'serpent' | 'serper'
 ): Promise<UrlSample[]> {
   const supabase = createServerClient()
   let query = supabase
@@ -181,7 +181,7 @@ export async function getUrlSamples(
   if (country) {
     query = query.eq('country', country)
   }
-  if (workflow === 'claude') {
+  if (workflow === 'serper') {
     query = query.not('url_claude_searched_at', 'is', null)
   } else if (workflow === 'serpent') {
     query = query.is('url_claude_searched_at', null).not('url_searched_at', 'is', null)

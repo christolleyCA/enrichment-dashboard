@@ -76,7 +76,7 @@ export default function SamplesPage() {
           .limit(20)
 
         if (countryFilter) query = query.eq('country', countryFilter)
-        if (workflowFilter === 'claude') query = query.not('url_claude_searched_at', 'is', null)
+        if (workflowFilter === 'serper') query = query.not('url_claude_searched_at', 'is', null)
         else if (workflowFilter === 'serpent') query = query.is('url_claude_searched_at', null).not('url_searched_at', 'is', null)
 
         const { data, error: err } = await query
@@ -217,7 +217,7 @@ export default function SamplesPage() {
           >
             <option value="">All Workflows</option>
             <option value="serpent">Serpent</option>
-            <option value="claude">Claude</option>
+            <option value="serper">Serper</option>
           </select>
         )}
 
@@ -301,7 +301,7 @@ export default function SamplesPage() {
                           : 'bg-blue-900/50 text-blue-400'
                       }`}
                     >
-                      {row.url_claude_searched_at ? 'Claude' : 'Serpent'}
+                      {row.url_claude_searched_at ? 'Serper' : 'Serpent'}
                     </span>
                   </td>
                   <td className="p-4 text-gray-400 text-xs">
@@ -324,7 +324,7 @@ export default function SamplesPage() {
                 <th className="p-4 font-medium">State</th>
                 <th className="p-4 font-medium">Country</th>
                 <th className="p-4 font-medium">Serpent Tried</th>
-                <th className="p-4 font-medium">Claude Tried</th>
+                <th className="p-4 font-medium">Serper Tried</th>
               </tr>
             </thead>
             <tbody className="text-gray-100">

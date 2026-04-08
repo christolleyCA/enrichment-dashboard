@@ -4,7 +4,7 @@ import ActivityTable from '@/components/activity-table'
 import { getDashboardStats, getUrlThroughput, getTimeDeltas } from '@/lib/queries'
 import {
   estimateUrlSerpentCost,
-  estimateUrlClaudeCost,
+  estimateUrlSerperCost,
   formatCost,
 } from '@/lib/costs'
 import { formatNumber, formatPct } from '@/lib/utils'
@@ -19,13 +19,13 @@ export default async function UrlDiscoveryPage() {
   ])
 
   const serpentCost = estimateUrlSerpentCost(stats.url_serpent_searched, stats.url_serpent_found)
-  const claudeCost = estimateUrlClaudeCost(stats.url_claude_searched)
+  const serperCost = estimateUrlSerperCost(stats.url_claude_searched)
 
   const serpentHitRate = formatPct(stats.url_serpent_found, stats.url_serpent_searched)
-  const claudeHitRate = formatPct(stats.url_claude_found, stats.url_claude_searched)
+  const serperHitRate = formatPct(stats.url_claude_found, stats.url_claude_searched)
 
   const serpentCostPerUrl = stats.url_serpent_found > 0 ? serpentCost / stats.url_serpent_found : 0
-  const claudeCostPerUrl = stats.url_claude_found > 0 ? claudeCost / stats.url_claude_found : 0
+  const serperCostPerUrl = stats.url_claude_found > 0 ? serperCost / stats.url_claude_found : 0
 
   // Pivot throughput by country for chart
   const hourMap = new Map<string, { hour: string; US: number; CA: number }>()
@@ -53,7 +53,7 @@ export default async function UrlDiscoveryPage() {
         deltas={deltas}
         rows={[
           { label: 'Serpent URLs Found', key: 'serpent_urls' },
-          { label: 'Claude URLs Found', key: 'claude_urls' },
+          { label: 'Serper URLs Found', key: 'claude_urls' },
         ]}
       />
 
@@ -69,8 +69,8 @@ export default async function UrlDiscoveryPage() {
                 <th className="pb-3 font-medium text-right">Serpent Searched</th>
                 <th className="pb-3 font-medium text-right">URLs Found</th>
                 <th className="pb-3 font-medium text-right">Hit Rate</th>
-                <th className="pb-3 font-medium text-right">Claude Tried</th>
-                <th className="pb-3 font-medium text-right">Claude Found</th>
+                <th className="pb-3 font-medium text-right">Serper Tried</th>
+                <th className="pb-3 font-medium text-right">Serper Found</th>
                 <th className="pb-3 font-medium text-right">Both Failed</th>
               </tr>
             </thead>
@@ -127,14 +127,14 @@ export default async function UrlDiscoveryPage() {
 
         <div className="rounded-xl bg-gray-900 border border-gray-800 p-6">
           <h3 className="text-lg font-semibold text-purple-400 mb-4">
-            Claude Fallback
+            Serper Fallback
           </h3>
           <div className="space-y-3">
             <Row label="Orgs Processed" value={formatNumber(stats.url_claude_searched)} />
             <Row label="URLs Found" value={formatNumber(stats.url_claude_found)} color="text-green-400" />
-            <Row label="Hit Rate" value={claudeHitRate} />
-            <Row label="Est. Cost" value={formatCost(claudeCost)} color="text-amber-400" />
-            <Row label="Cost per URL" value={formatCost(claudeCostPerUrl)} color="text-amber-400" />
+            <Row label="Hit Rate" value={serperHitRate} />
+            <Row label="Est. Cost" value={formatCost(serperCost)} color="text-amber-400" />
+            <Row label="Cost per URL" value={formatCost(serperCostPerUrl)} color="text-amber-400" />
           </div>
         </div>
       </div>
@@ -163,7 +163,7 @@ export default async function UrlDiscoveryPage() {
           </div>
           <div>
             <p className="text-3xl font-bold text-purple-400">{formatNumber(stats.url_claude_searched)}</p>
-            <p className="text-xs text-gray-500 mt-1">Claude Tried</p>
+            <p className="text-xs text-gray-500 mt-1">Serper Tried</p>
           </div>
           <div>
             <p className="text-3xl font-bold text-green-400">{formatNumber(stats.has_url)}</p>
