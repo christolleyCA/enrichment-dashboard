@@ -1,7 +1,13 @@
-import StatCard from '@/components/stat-card'
 import ThroughputChart from '@/components/throughput-chart'
 import ActivityTable from '@/components/activity-table'
-import { getDashboardStats, getUrlThroughput, getTimeDeltas } from '@/lib/queries'
+import DonutChart from '@/components/donut-chart'
+import {
+  getDashboardStats,
+  getUrlThroughput,
+  getTimeDeltas,
+  getProviderBreakdown,
+  type ProviderRow,
+} from '@/lib/queries'
 import {
   estimateUrlSerpentCost,
   estimateUrlSerperCost,
@@ -11,11 +17,47 @@ import { formatNumber, formatPct } from '@/lib/utils'
 
 export const revalidate = 30
 
+const PROVIDER_COLORS: Record<string, string> = {
+  serpent: '#3b82f6',     // blue
+  serper: '#a855f7',      // purple
+  scrapingdog: '#f59e0b', // amber
+  legacy: '#6b7280',      // gray
+}
+
+const PROVIDER_LABELS: Record<string, string> = {
+  serpent: 'Serpent',
+  serper: 'Serper',
+  scrapingdog: 'ScrapingDog',
+  legacy: 'Pre-tracking',
+}
+
+function aggregateByProvider(rows: ProviderRow[] | null, countryFilter?: string) {
+  if (!rows) return new Map<string, number>()
+  const map = new Map<string, number>()
+  for (const row of rows) {
+    if (countryFilter && row.country !== countryFilter) continue
+    map.set(row.provider, (map.get(row.provider) || 0) + row.urls_found)
+  }
+  return map
+}
+
+function toDonutData(providerMap: Map<string, number>) {
+  return Array.from(providerMap.entries())
+    .filter(([, v]) => v > 0)
+    .map(([provider, value]) => ({
+      name: PROVIDER_LABELS[provider] || provider,
+      value,
+      color: PROVIDER_COLORS[provider] || '#6b7280',
+    }))
+    .sort((a, b) => b.value - a.value)
+}
+
 export default async function UrlDiscoveryPage() {
-  const [stats, throughput, deltas] = await Promise.all([
+  const [stats, throughput, deltas, providers] = await Promise.all([
     getDashboardStats(),
     getUrlThroughput(7),
     getTimeDeltas(),
+    getProviderBreakdown(),
   ])
 
   const serpentCost = estimateUrlSerpentCost(stats.url_serpent_searched, stats.url_serpent_found)
@@ -26,6 +68,20 @@ export default async function UrlDiscoveryPage() {
 
   const serpentCostPerUrl = stats.url_serpent_found > 0 ? serpentCost / stats.url_serpent_found : 0
   const serperCostPerUrl = stats.url_claude_found > 0 ? serperCost / stats.url_claude_found : 0
+
+  // Provider breakdown data
+  const allTimeMap = aggregateByProvider(providers.all_time)
+  const last24hMap = aggregateByProvider(providers.last_24h)
+  const last1hMap = aggregateByProvider(providers.last_1h)
+
+  const allTimeTotal = Array.from(allTimeMap.values()).reduce((a, b) => a + b, 0)
+  const last1hTotal = Array.from(last1hMap.values()).reduce((a, b) => a + b, 0)
+
+  // Per-country provider breakdown for table
+  const countryProviders = ['US', 'CA'].map((country) => {
+    const map = aggregateByProvider(providers.all_time, country)
+    return { country, serpent: map.get('serpent') || 0, serper: map.get('serper') || 0, scrapingdog: map.get('scrapingdog') || 0, legacy: map.get('legacy') || 0 }
+  })
 
   // Pivot throughput by country for chart
   const hourMap = new Map<string, { hour: string; US: number; CA: number }>()
@@ -57,52 +113,78 @@ export default async function UrlDiscoveryPage() {
         ]}
       />
 
-      {/* Country Breakdown */}
+      {/* Provider Breakdown Charts */}
+      <div className="grid grid-cols-3 gap-6">
+        <DonutChart
+          data={toDonutData(allTimeMap)}
+          title="Provider Breakdown (All Time)"
+          centerLabel="Total"
+          centerValue={formatNumber(allTimeTotal)}
+        />
+        <DonutChart
+          data={toDonutData(last24hMap)}
+          title="Provider Breakdown (24h)"
+          centerLabel="Last 24h"
+          centerValue={formatNumber(Array.from(last24hMap.values()).reduce((a, b) => a + b, 0))}
+        />
+        <DonutChart
+          data={toDonutData(last1hMap)}
+          title="Provider Breakdown (1h)"
+          centerLabel="Last hour"
+          centerValue={formatNumber(last1hTotal)}
+        />
+      </div>
+
+      {/* Provider x Country Table */}
       <div className="rounded-xl bg-gray-900 border border-gray-800 p-6">
-        <h3 className="text-lg font-semibold text-gray-100 mb-4">Country Breakdown</h3>
+        <h3 className="text-lg font-semibold text-gray-100 mb-4">Provider x Country</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
                 <th className="pb-3 font-medium">Country</th>
                 <th className="pb-3 font-medium text-right">Total Orgs</th>
-                <th className="pb-3 font-medium text-right">Serpent Searched</th>
-                <th className="pb-3 font-medium text-right">URLs Found</th>
-                <th className="pb-3 font-medium text-right">Hit Rate</th>
-                <th className="pb-3 font-medium text-right">Serper Tried</th>
-                <th className="pb-3 font-medium text-right">Serper Found</th>
-                <th className="pb-3 font-medium text-right">Both Failed</th>
+                <th className="pb-3 font-medium text-right">Searched</th>
+                <th className="pb-3 font-medium text-right">
+                  <span className="text-blue-400">Serpent</span>
+                </th>
+                <th className="pb-3 font-medium text-right">
+                  <span className="text-purple-400">Serper</span>
+                </th>
+                <th className="pb-3 font-medium text-right">
+                  <span className="text-amber-400">ScrapingDog</span>
+                </th>
+                <th className="pb-3 font-medium text-right">Pre-tracking</th>
+                <th className="pb-3 font-medium text-right">Not Found</th>
               </tr>
             </thead>
             <tbody className="text-gray-100">
-              <tr className="border-b border-gray-800/50">
-                <td className="py-3 font-medium">US</td>
-                <td className="py-3 text-right">{formatNumber(stats.total_us)}</td>
-                <td className="py-3 text-right">{formatNumber(stats.url_serpent_searched_us)}</td>
-                <td className="py-3 text-right text-blue-400">{formatNumber(stats.url_serpent_found_us)}</td>
-                <td className="py-3 text-right">{formatPct(stats.url_serpent_found_us, stats.url_serpent_searched_us)}</td>
-                <td className="py-3 text-right text-purple-400">-</td>
-                <td className="py-3 text-right text-green-400">-</td>
-                <td className="py-3 text-right text-red-400">-</td>
-              </tr>
-              <tr className="border-b border-gray-800/50">
-                <td className="py-3 font-medium">CA</td>
-                <td className="py-3 text-right">{formatNumber(stats.total_ca)}</td>
-                <td className="py-3 text-right">{formatNumber(stats.url_serpent_searched_ca)}</td>
-                <td className="py-3 text-right text-blue-400">{formatNumber(stats.url_serpent_found_ca)}</td>
-                <td className="py-3 text-right">{formatPct(stats.url_serpent_found_ca, stats.url_serpent_searched_ca)}</td>
-                <td className="py-3 text-right text-purple-400">-</td>
-                <td className="py-3 text-right text-green-400">-</td>
-                <td className="py-3 text-right text-red-400">-</td>
-              </tr>
+              {countryProviders.map((cp) => {
+                const totalOrgs = cp.country === 'US' ? stats.total_us : stats.total_ca
+                const searched = cp.country === 'US' ? stats.url_serpent_searched_us : stats.url_serpent_searched_ca
+                const totalFound = cp.serpent + cp.serper + cp.scrapingdog + cp.legacy
+                const notFound = searched - totalFound
+                return (
+                  <tr key={cp.country} className="border-b border-gray-800/50">
+                    <td className="py-3 font-medium">{cp.country}</td>
+                    <td className="py-3 text-right">{formatNumber(totalOrgs)}</td>
+                    <td className="py-3 text-right">{formatNumber(searched)}</td>
+                    <td className="py-3 text-right text-blue-400">{formatNumber(cp.serpent)}</td>
+                    <td className="py-3 text-right text-purple-400">{formatNumber(cp.serper)}</td>
+                    <td className="py-3 text-right text-amber-400">{formatNumber(cp.scrapingdog)}</td>
+                    <td className="py-3 text-right text-gray-500">{formatNumber(cp.legacy)}</td>
+                    <td className="py-3 text-right text-red-400">{notFound > 0 ? formatNumber(notFound) : '-'}</td>
+                  </tr>
+                )
+              })}
               <tr className="font-semibold">
                 <td className="py-3">Total</td>
                 <td className="py-3 text-right">{formatNumber(stats.total_orgs)}</td>
                 <td className="py-3 text-right">{formatNumber(stats.url_serpent_searched)}</td>
-                <td className="py-3 text-right text-blue-400">{formatNumber(stats.url_serpent_found)}</td>
-                <td className="py-3 text-right">{serpentHitRate}</td>
-                <td className="py-3 text-right text-purple-400">{formatNumber(stats.url_claude_searched)}</td>
-                <td className="py-3 text-right text-green-400">{formatNumber(stats.url_claude_found)}</td>
+                <td className="py-3 text-right text-blue-400">{formatNumber((allTimeMap.get('serpent') || 0))}</td>
+                <td className="py-3 text-right text-purple-400">{formatNumber((allTimeMap.get('serper') || 0))}</td>
+                <td className="py-3 text-right text-amber-400">{formatNumber((allTimeMap.get('scrapingdog') || 0))}</td>
+                <td className="py-3 text-right text-gray-500">{formatNumber((allTimeMap.get('legacy') || 0))}</td>
                 <td className="py-3 text-right text-red-400">{formatNumber(stats.url_both_failed)}</td>
               </tr>
             </tbody>
@@ -130,7 +212,6 @@ export default async function UrlDiscoveryPage() {
             Serper Fallback
           </h3>
           <div className="space-y-3">
-            <Row label="Orgs Processed" value={formatNumber(stats.url_claude_searched)} />
             <Row label="URLs Found" value={formatNumber(stats.url_claude_found)} color="text-green-400" />
             <Row label="Hit Rate" value={serperHitRate} />
             <Row label="Est. Cost" value={formatCost(serperCost)} color="text-amber-400" />
@@ -159,15 +240,15 @@ export default async function UrlDiscoveryPage() {
           </div>
           <div>
             <p className="text-3xl font-bold text-blue-400">{formatNumber(stats.url_serpent_searched)}</p>
-            <p className="text-xs text-gray-500 mt-1">Serpent Searched</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-purple-400">{formatNumber(stats.url_claude_searched)}</p>
-            <p className="text-xs text-gray-500 mt-1">Serper Tried</p>
+            <p className="text-xs text-gray-500 mt-1">Searched</p>
           </div>
           <div>
             <p className="text-3xl font-bold text-green-400">{formatNumber(stats.has_url)}</p>
-            <p className="text-xs text-gray-500 mt-1">Total with URL</p>
+            <p className="text-xs text-gray-500 mt-1">URLs Found</p>
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-red-400">{formatNumber(stats.url_both_failed)}</p>
+            <p className="text-xs text-gray-500 mt-1">Not Found</p>
           </div>
           <div>
             <p className="text-3xl font-bold text-gray-500">{formatNumber(stats.url_unsearched)}</p>
