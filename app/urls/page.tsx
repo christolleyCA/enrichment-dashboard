@@ -80,7 +80,7 @@ export default async function UrlDiscoveryPage() {
   // Per-country provider breakdown for table
   const countryProviders = ['US', 'CA'].map((country) => {
     const map = aggregateByProvider(providers.all_time, country)
-    return { country, serpent: map.get('serpent') || 0, serper: map.get('serper') || 0, scrapingdog: map.get('scrapingdog') || 0, legacy: map.get('legacy') || 0 }
+    return { country, serpent: map.get('serpent') || 0, serper: map.get('serper') || 0, legacy: map.get('legacy') || 0 }
   })
 
   // Pivot throughput by country for chart
@@ -151,9 +151,6 @@ export default async function UrlDiscoveryPage() {
                 <th className="pb-3 font-medium text-right">
                   <span className="text-purple-400">Serper</span>
                 </th>
-                <th className="pb-3 font-medium text-right">
-                  <span className="text-amber-400">ScrapingDog</span>
-                </th>
                 <th className="pb-3 font-medium text-right">Pre-tracking</th>
                 <th className="pb-3 font-medium text-right">Not Found</th>
               </tr>
@@ -162,7 +159,7 @@ export default async function UrlDiscoveryPage() {
               {countryProviders.map((cp) => {
                 const totalOrgs = cp.country === 'US' ? stats.total_us : stats.total_ca
                 const searched = cp.country === 'US' ? stats.url_serpent_searched_us : stats.url_serpent_searched_ca
-                const totalFound = cp.serpent + cp.serper + cp.scrapingdog + cp.legacy
+                const totalFound = cp.serpent + cp.serper + cp.legacy
                 const notFound = searched - totalFound
                 return (
                   <tr key={cp.country} className="border-b border-gray-800/50">
@@ -171,7 +168,6 @@ export default async function UrlDiscoveryPage() {
                     <td className="py-3 text-right">{formatNumber(searched)}</td>
                     <td className="py-3 text-right text-blue-400">{formatNumber(cp.serpent)}</td>
                     <td className="py-3 text-right text-purple-400">{formatNumber(cp.serper)}</td>
-                    <td className="py-3 text-right text-amber-400">{formatNumber(cp.scrapingdog)}</td>
                     <td className="py-3 text-right text-gray-500">{formatNumber(cp.legacy)}</td>
                     <td className="py-3 text-right text-red-400">{notFound > 0 ? formatNumber(notFound) : '-'}</td>
                   </tr>
@@ -183,7 +179,6 @@ export default async function UrlDiscoveryPage() {
                 <td className="py-3 text-right">{formatNumber(stats.url_serpent_searched)}</td>
                 <td className="py-3 text-right text-blue-400">{formatNumber((allTimeMap.get('serpent') || 0))}</td>
                 <td className="py-3 text-right text-purple-400">{formatNumber((allTimeMap.get('serper') || 0))}</td>
-                <td className="py-3 text-right text-amber-400">{formatNumber((allTimeMap.get('scrapingdog') || 0))}</td>
                 <td className="py-3 text-right text-gray-500">{formatNumber((allTimeMap.get('legacy') || 0))}</td>
                 <td className="py-3 text-right text-red-400">{formatNumber(stats.url_both_failed)}</td>
               </tr>
@@ -233,7 +228,7 @@ export default async function UrlDiscoveryPage() {
       {/* Status Funnel */}
       <div className="rounded-xl bg-gray-900 border border-gray-800 p-6">
         <h3 className="text-lg font-semibold text-gray-100 mb-6">Pipeline Status</h3>
-        <div className="grid grid-cols-5 gap-4 text-center">
+        <div className="grid grid-cols-6 gap-4 text-center">
           <div>
             <p className="text-3xl font-bold text-gray-100">{formatNumber(stats.total_orgs)}</p>
             <p className="text-xs text-gray-500 mt-1">Total Orgs</p>
@@ -243,8 +238,8 @@ export default async function UrlDiscoveryPage() {
             <p className="text-xs text-gray-500 mt-1">Searched</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-green-400">{formatNumber(stats.has_url)}</p>
-            <p className="text-xs text-gray-500 mt-1">URLs Found</p>
+            <p className="text-3xl font-bold text-green-400">{formatNumber(stats.url_serpent_found + stats.url_claude_found)}</p>
+            <p className="text-xs text-gray-500 mt-1">New URLs Found</p>
           </div>
           <div>
             <p className="text-3xl font-bold text-red-400">{formatNumber(stats.url_both_failed)}</p>
@@ -253,6 +248,10 @@ export default async function UrlDiscoveryPage() {
           <div>
             <p className="text-3xl font-bold text-gray-500">{formatNumber(stats.url_unsearched)}</p>
             <p className="text-xs text-gray-500 mt-1">Unsearched</p>
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-cyan-400">{formatNumber(stats.has_url)}</p>
+            <p className="text-xs text-gray-500 mt-1">Total URLs</p>
           </div>
         </div>
       </div>

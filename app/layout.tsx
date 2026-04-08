@@ -46,6 +46,7 @@ export default function RootLayout({
               <NavLink href="/news" label="News Discovery" />
               <NavLink href="/samples" label="Samples" />
               <NavLink href="/costs" label="Costs & Balances" />
+              <NavLink href="/system" label="GPU & System" />
             </nav>
           </div>
           <div className="px-2 text-xs text-gray-600">

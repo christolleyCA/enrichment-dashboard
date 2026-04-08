@@ -26,14 +26,20 @@ export default async function OverviewPage() {
   const newsSerperCost = estimateNewsSerperCost(stats.url_claude_searched)
   const totalCost = urlSerpentCost + urlSerperCost + newsSerpentCost + newsSerperCost
 
+  // Pre-existing URLs = total with URLs minus those found by discovery
+  const newUrlsFound = stats.url_serpent_found + stats.url_claude_found
+  const preExistingUrls = stats.has_url - newUrlsFound
+  // Orgs needing discovery = total minus those that already had URLs
+  const orgsNeedingDiscovery = stats.total_orgs - preExistingUrls
+
   const urlProcessed = stats.url_serpent_searched
-  const urlTotal = stats.total_orgs
+  const urlTotal = orgsNeedingDiscovery
   const urlPct = urlTotal > 0 ? (urlProcessed / urlTotal) * 100 : 0
 
   const newsProcessed = newsStats.unique_orgs
   const newsPct = urlTotal > 0 ? (newsProcessed / urlTotal) * 100 : 0
 
-  const urlHitRate = formatPct(stats.has_url, urlProcessed)
+  const urlHitRate = formatPct(stats.url_serpent_found, stats.url_serpent_searched)
   const urlEta = calcETA(
     urlProcessed,
     urlTotal,
@@ -69,9 +75,9 @@ export default async function OverviewPage() {
           sub={`${formatNumber(stats.total_us)} US / ${formatNumber(stats.total_ca)} CA`}
         />
         <StatCard
-          label="URLs Found"
-          value={formatNumber(stats.has_url)}
-          sub={`${urlHitRate} hit rate`}
+          label="New URLs Found"
+          value={formatNumber(newUrlsFound)}
+          sub={`${urlHitRate} hit rate · ${formatNumber(stats.has_url)} total`}
           color="text-blue-400"
         />
         <StatCard
@@ -191,7 +197,7 @@ export default async function OverviewPage() {
           <Arrow />
           <div className="flex flex-col gap-2">
             <FunnelStep
-              label="URLs Found"
+              label="New URLs Found"
               value={formatNumber(stats.url_serpent_found)}
               color="text-green-400"
               small
@@ -229,6 +235,12 @@ export default async function OverviewPage() {
             label="Unsearched"
             value={formatNumber(stats.url_unsearched)}
             color="text-gray-500"
+          />
+          <Arrow />
+          <FunnelStep
+            label="Total URLs"
+            value={formatNumber(stats.has_url)}
+            color="text-blue-400"
           />
         </div>
       </div>

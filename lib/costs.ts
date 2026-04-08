@@ -9,10 +9,10 @@ export const REAL_COST_PER_QUERY = {
 }
 
 export const COST_PER_ORG = {
-  serpentUrl: 0.00075,            // Serper: $0.75/1K searches
-  deepseekUrlValidation: 0.000050, // per org that gets validated (~25% of searched)
+  serpentUrl: 0.00002,             // Serpent Bing: $0.02/1K searches
+  deepseekUrlValidation: 0.000050, // per org that gets validated
   serperUrl: 0.00075,             // Serper: $0.75/1K searches
-  serpentNews: 0.00075,           // Serper: $0.75/1K searches
+  serpentNews: 0.00001,           // Serpent News: $0.01/1K searches
   deepseekNewsClassify: 0.000070, // per org that returned results
   serperNews: 0.00075,            // Serper: $0.75/1K searches
 }
