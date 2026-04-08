@@ -1,5 +1,13 @@
 const USD_TO_CAD = 1.35
 
+export const REAL_COST_PER_QUERY = {
+  serpentBing: 0.00002,          // $0.02/1K
+  serpentNews: 0.00001,          // $0.01/1K
+  serper: 0.00075,               // $0.75/1K (1 credit = 1 query)
+  deepseekPerOrg: 0.000050,      // estimated avg for URL validation
+  deepseekNewsPerOrg: 0.000070,  // estimated avg for news classification
+}
+
 export const COST_PER_ORG = {
   serpentUrl: 0.00075,            // Serper: $0.75/1K searches
   deepseekUrlValidation: 0.000050, // per org that gets validated (~25% of searched)
