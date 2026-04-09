@@ -2,24 +2,28 @@ import StatCard from '@/components/stat-card'
 import ThroughputChart from '@/components/throughput-chart'
 import HorizontalBarChart from '@/components/bar-chart'
 import ActivityTable from '@/components/activity-table'
+import DonutChart from '@/components/donut-chart'
 import {
   getNewsStats,
   getNewsThroughput,
   getTopSources,
   getNewsDateDistribution,
   getTimeDeltas,
+  getNewsProviderBreakdown,
+  type NewsProviderRow,
 } from '@/lib/queries'
 import { formatNumber } from '@/lib/utils'
 
 export const revalidate = 30
 
 export default async function NewsDiscoveryPage() {
-  const [newsStats, throughput, topSources, dateDist, deltas] = await Promise.all([
+  const [newsStats, throughput, topSources, dateDist, deltas, newsProviders] = await Promise.all([
     getNewsStats(),
     getNewsThroughput(7),
     getTopSources(20),
     getNewsDateDistribution(),
     getTimeDeltas(),
+    getNewsProviderBreakdown(),
   ])
 
   const avgPerOrg =
@@ -81,6 +85,30 @@ export default async function NewsDiscoveryPage() {
           { label: 'Orgs Covered', key: 'news_orgs' },
         ]}
       />
+
+      {/* Provider Breakdown Charts */}
+      <div className="grid grid-cols-3 gap-6">
+        <DonutChart
+          data={newsToDonutData(newsProviders.all_time)}
+          title="Provider Breakdown (All Time)"
+          centerLabel="Total"
+          centerValue={formatNumber(newsStats.total_articles)}
+        />
+        <DonutChart
+          data={newsToDonutData(newsProviders.last_24h)}
+          title="Provider Breakdown (24h)"
+          centerLabel="Last 24h"
+          centerValue={formatNumber(newsStats.articles_last_24h)}
+        />
+        <DonutChart
+          data={newsToDonutData(newsProviders.last_1h)}
+          title="Provider Breakdown (1h)"
+          centerLabel="Last hour"
+          centerValue={formatNumber(
+            newsProviders.last_1h?.reduce((sum, r) => sum + r.articles_found, 0) || 0
+          )}
+        />
+      </div>
 
       {/* Throughput Chart */}
       <ThroughputChart
@@ -147,6 +175,41 @@ export default async function NewsDiscoveryPage() {
       </div>
     </div>
   )
+}
+
+const NEWS_PROVIDER_COLORS: Record<string, string> = {
+  serpent: '#3b82f6',     // blue
+  serper: '#a855f7',      // purple
+  scrapingdog: '#f59e0b', // amber
+  legacy: '#6b7280',      // gray
+}
+
+const NEWS_PROVIDER_LABELS: Record<string, string> = {
+  serpent: 'Serpent',
+  serper: 'Serper',
+  scrapingdog: 'ScrapingDog',
+  legacy: 'Pre-tracking',
+}
+
+const NEWS_KNOWN_PROVIDERS = ['serpent', 'scrapingdog', 'serper', 'legacy']
+
+function newsToDonutData(rows: NewsProviderRow[] | null) {
+  const map = new Map<string, number>()
+  for (const p of NEWS_KNOWN_PROVIDERS) {
+    map.set(p, 0)
+  }
+  if (rows) {
+    for (const row of rows) {
+      map.set(row.provider, (map.get(row.provider) || 0) + row.articles_found)
+    }
+  }
+  return Array.from(map.entries())
+    .map(([provider, value]) => ({
+      name: NEWS_PROVIDER_LABELS[provider] || provider,
+      value,
+      color: NEWS_PROVIDER_COLORS[provider] || '#6b7280',
+    }))
+    .sort((a, b) => b.value - a.value)
 }
 
 function MiniStat({

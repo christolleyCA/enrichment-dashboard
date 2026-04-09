@@ -185,6 +185,24 @@ export async function getProviderBreakdown(): Promise<ProviderBreakdown> {
   return data as ProviderBreakdown
 }
 
+export interface NewsProviderRow {
+  provider: string
+  articles_found: number
+}
+
+export interface NewsProviderBreakdown {
+  all_time: NewsProviderRow[] | null
+  last_24h: NewsProviderRow[] | null
+  last_1h: NewsProviderRow[] | null
+}
+
+export async function getNewsProviderBreakdown(): Promise<NewsProviderBreakdown> {
+  const supabase = createServerClient()
+  const { data, error } = await supabase.rpc('news_provider_breakdown')
+  if (error) throw new Error(`news_provider_breakdown failed: ${error.message}`)
+  return data as NewsProviderBreakdown
+}
+
 export async function getUrlSamples(
   country?: string,
   workflow?: 'serpent' | 'serper'

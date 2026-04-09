@@ -43,7 +43,6 @@ function aggregateByProvider(rows: ProviderRow[] | null, countryFilter?: string)
 
 function toDonutData(providerMap: Map<string, number>) {
   return Array.from(providerMap.entries())
-    .filter(([, v]) => v > 0)
     .map(([provider, value]) => ({
       name: PROVIDER_LABELS[provider] || provider,
       value,
@@ -74,13 +73,21 @@ export default async function UrlDiscoveryPage() {
   const last24hMap = aggregateByProvider(providers.last_24h)
   const last1hMap = aggregateByProvider(providers.last_1h)
 
+  // Seed known providers so ScrapingDog shows even at 0
+  const KNOWN_PROVIDERS = ['serpent', 'scrapingdog', 'serper', 'legacy']
+  for (const p of KNOWN_PROVIDERS) {
+    if (!allTimeMap.has(p)) allTimeMap.set(p, 0)
+    if (!last24hMap.has(p)) last24hMap.set(p, 0)
+    if (!last1hMap.has(p)) last1hMap.set(p, 0)
+  }
+
   const allTimeTotal = Array.from(allTimeMap.values()).reduce((a, b) => a + b, 0)
   const last1hTotal = Array.from(last1hMap.values()).reduce((a, b) => a + b, 0)
 
   // Per-country provider breakdown for table
   const countryProviders = ['US', 'CA'].map((country) => {
     const map = aggregateByProvider(providers.all_time, country)
-    return { country, serpent: map.get('serpent') || 0, serper: map.get('serper') || 0, legacy: map.get('legacy') || 0 }
+    return { country, serpent: map.get('serpent') || 0, scrapingdog: map.get('scrapingdog') || 0, serper: map.get('serper') || 0, legacy: map.get('legacy') || 0 }
   })
 
   // Pivot throughput by country for chart
@@ -149,6 +156,9 @@ export default async function UrlDiscoveryPage() {
                   <span className="text-blue-400">Serpent</span>
                 </th>
                 <th className="pb-3 font-medium text-right">
+                  <span className="text-amber-400">ScrapingDog</span>
+                </th>
+                <th className="pb-3 font-medium text-right">
                   <span className="text-purple-400">Serper</span>
                 </th>
                 <th className="pb-3 font-medium text-right">Pre-tracking</th>
@@ -159,7 +169,7 @@ export default async function UrlDiscoveryPage() {
               {countryProviders.map((cp) => {
                 const totalOrgs = cp.country === 'US' ? stats.total_us : stats.total_ca
                 const searched = cp.country === 'US' ? stats.url_serpent_searched_us : stats.url_serpent_searched_ca
-                const totalFound = cp.serpent + cp.serper + cp.legacy
+                const totalFound = cp.serpent + cp.scrapingdog + cp.serper + cp.legacy
                 const notFound = searched - totalFound
                 return (
                   <tr key={cp.country} className="border-b border-gray-800/50">
@@ -167,6 +177,7 @@ export default async function UrlDiscoveryPage() {
                     <td className="py-3 text-right">{formatNumber(totalOrgs)}</td>
                     <td className="py-3 text-right">{formatNumber(searched)}</td>
                     <td className="py-3 text-right text-blue-400">{formatNumber(cp.serpent)}</td>
+                    <td className="py-3 text-right text-amber-400">{formatNumber(cp.scrapingdog)}</td>
                     <td className="py-3 text-right text-purple-400">{formatNumber(cp.serper)}</td>
                     <td className="py-3 text-right text-gray-500">{formatNumber(cp.legacy)}</td>
                     <td className="py-3 text-right text-red-400">{notFound > 0 ? formatNumber(notFound) : '-'}</td>
@@ -178,6 +189,7 @@ export default async function UrlDiscoveryPage() {
                 <td className="py-3 text-right">{formatNumber(stats.total_orgs)}</td>
                 <td className="py-3 text-right">{formatNumber(stats.url_serpent_searched)}</td>
                 <td className="py-3 text-right text-blue-400">{formatNumber((allTimeMap.get('serpent') || 0))}</td>
+                <td className="py-3 text-right text-amber-400">{formatNumber((allTimeMap.get('scrapingdog') || 0))}</td>
                 <td className="py-3 text-right text-purple-400">{formatNumber((allTimeMap.get('serper') || 0))}</td>
                 <td className="py-3 text-right text-gray-500">{formatNumber((allTimeMap.get('legacy') || 0))}</td>
                 <td className="py-3 text-right text-red-400">{formatNumber(stats.url_both_failed)}</td>
