@@ -18,6 +18,7 @@ import {
 } from '@/lib/costs'
 import { formatNumber } from '@/lib/utils'
 
+export const dynamic = 'force-dynamic'
 export const revalidate = 30
 
 export default async function CostsPage() {

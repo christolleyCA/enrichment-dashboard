@@ -15,6 +15,7 @@ import {
 } from '@/lib/costs'
 import { formatNumber, formatPct } from '@/lib/utils'
 
+export const dynamic = 'force-dynamic'
 export const revalidate = 30
 
 const PROVIDER_COLORS: Record<string, string> = {

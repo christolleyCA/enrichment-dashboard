@@ -11,6 +11,7 @@ import {
 } from '@/lib/costs'
 import { formatNumber, formatPct, calcETA } from '@/lib/utils'
 
+export const dynamic = 'force-dynamic'
 export const revalidate = 30 // 30 seconds — live refresh handles the interval
 
 export default async function OverviewPage() {
