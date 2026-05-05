@@ -50,8 +50,8 @@ export default function RootLayout({
             </nav>
           </div>
           <div className="px-2 text-xs text-gray-600">
-            <p>grantomatic-prod</p>
-            <p className="font-mono">hjtvtkffpziopozmtsnb</p>
+            <p>supabase-grantomatic</p>
+            <p className="font-mono">self-hosted</p>
           </div>
         </aside>
 
